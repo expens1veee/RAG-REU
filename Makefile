@@ -20,3 +20,6 @@ qdrant.start:
 
 qdrant.stop:
 	docker stop qdrant
+
+venv:
+	source .venv/bin/activate
