@@ -19,7 +19,7 @@ async def status():
 # Эндпоинт для обработки запросов от фронта
 @app.post("/ask")
 async def ask(request: AskRequest):
-    # Здесь будет логика обработки запроса
+    # Тут будет логика обработки запроса
     # Пока просто возвращаем полученный запрос для демонстрации
     return {"received_query": request.query, "received_token": request.token}
 
