@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Simple RAG API
+  title: RAG API
   description: API для проверки состояния сервера и обработки запросов от фронтенда.
   version: 1.0.0
 
@@ -9,11 +9,13 @@ servers:
     description: Локальный сервер
 
 paths:
-  /status:
+  /api/status:
     get:
       summary: Проверка состояния сервера
       description: Возвращает сообщение, подтверждающее, что сервер работает.
       operationId: status
+      tags:
+        - api
       responses:
         '200':
           description: Сервер работает
@@ -26,11 +28,13 @@ paths:
                     type: string
                     example: "Alive"
 
-  /ask:
+  /api/ask:
     post:
-      summary: Обработка запроса от фронтенда
-      description: Принимает запрос от фронтенда в формате JSON и возвращает полученные данные.
+      summary: Отправка запроса от пользователя
+      description: Принимает запрос от пользователя в формате JSON и возвращает полученные данные.
       operationId: ask
+      tags:
+        - api
       requestBody:
         required: true
         content:
