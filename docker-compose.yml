@@ -6,19 +6,28 @@ services:
       - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 2
     networks:
       - app-network
-
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - qdrant
+      qdrant:
+        condition: service_healthy
     environment:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
+    volumes:
+      - .:/app
     networks:
       - app-network
     command: python main.py
