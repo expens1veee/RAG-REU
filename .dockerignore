@@ -1,0 +1,12 @@
+**pycache**
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.git/
+.gitignore
+docs/
+README.md
+Makefile
