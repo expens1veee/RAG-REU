@@ -4,6 +4,7 @@ from typing import Optional
 from src.internal.storage.qdrant import QdrantStorage
 import numpy as np
 
+
 class AskRequest(BaseModel):
     query: str
     token: Optional[str] = None  # Опциональное поле для токена

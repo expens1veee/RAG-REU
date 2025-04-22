@@ -17,6 +17,7 @@ class StorageConfig:
     def qdrant_url(self) -> str:
         return f"http://{self.host}:{self.port}"
 
+
 def main() -> None:
     config = StorageConfig(
         host=os.getenv("QDRANT_HOST", "localhost"),
@@ -27,7 +28,6 @@ def main() -> None:
 
     # Создаём приложение FastAPI
     app = FastAPI()
-
 
     # Создаём экземпляр класса Server и подключаем его роутер
     server = Server(storage=storage)
