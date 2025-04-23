@@ -4,18 +4,7 @@ from src.internal.storage.qdrant import QdrantStorage
 import uvicorn
 from dataclasses import dataclass
 import os
-
-
-@dataclass
-class StorageConfig:
-    host: str
-    port: int
-    vector_size: int = 768
-    collection_name: str = "documents"
-
-    @property
-    def qdrant_url(self) -> str:
-        return f"http://{self.host}:{self.port}"
+from src.storage_config.config import StorageConfig
 
 
 def main() -> None:
