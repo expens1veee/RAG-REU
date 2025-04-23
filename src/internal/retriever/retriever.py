@@ -5,8 +5,7 @@ from src.interfaces.interfaces import IRetriever, IStorage
 
 
 class Retriever(IRetriever):
-    def __init__(self, storage: IStorage,
-                 model_name: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"):
+    def __init__(self, storage: IStorage, model_name: str = "sergeyzh/rubert-mini-frida"):
         self.model = SentenceTransformer(model_name)
         self.storage = storage
 

@@ -17,7 +17,7 @@ def main() -> None:
     config = StorageConfig(
         host=os.getenv("QDRANT_HOST", "localhost"),
         port=int(os.getenv("QDRANT_PORT", 6333)),
-        vector_size=384
+        vector_size=312
     )
     logger.info(f"Storage config: host={config.host}, port={config.port}")
 

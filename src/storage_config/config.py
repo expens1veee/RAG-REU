@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class StorageConfig:
     host: str
     port: int
-    vector_size: int = 384
+    vector_size: int = 312
     collection_name: str = "documents"
 
     @property
