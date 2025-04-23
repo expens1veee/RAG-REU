@@ -11,6 +11,8 @@ class Retriever(IRetriever):
         self.storage = storage
 
     def generate_embeddings(self, chunks: List[str], metadata: List[dict]) -> Tensor:
+        if not chunks:
+            return Tensor()
         embeddings = self.model.encode(
             chunks,
             convert_to_tensor=True,
@@ -36,6 +38,8 @@ class Retriever(IRetriever):
         """
         Простейшая реализация: берём контексты, ранжируем по косинусной близости и возвращаем топ-1.
         """
+        if not context_list:
+            return ""
         context_texts = [ctx[0] for ctx in context_list]
         context_embeddings = self.model.encode(context_texts, convert_to_tensor=True, normalize_embeddings=True)
         query_embeddings = self.model.encode(query_list, convert_to_tensor=True, normalize_embeddings=True)

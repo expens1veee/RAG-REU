@@ -6,28 +6,18 @@ import uvicorn
 from dataclasses import dataclass
 import os
 import logging
+from src.storage_config.config import StorageConfig
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class StorageConfig:
-    host: str
-    port: int
-    vector_size: int = 768
-    collection_name: str = "documents"
-
-    @property
-    def qdrant_url(self) -> str:
-        return f"http://{self.host}:{self.port}"
 
 
 def main() -> None:
     config = StorageConfig(
         host=os.getenv("QDRANT_HOST", "localhost"),
         port=int(os.getenv("QDRANT_PORT", 6333)),
-        vector_size=768
+        vector_size=384
     )
     logger.info(f"Storage config: host={config.host}, port={config.port}")
 

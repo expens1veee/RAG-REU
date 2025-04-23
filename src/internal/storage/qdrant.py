@@ -3,9 +3,9 @@ from qdrant_client.models import PointStruct, VectorParams, Distance, Filter, Fi
 from typing import Any, List
 from numpy import ndarray
 from torch import Tensor
-
+import time
 from src.interfaces.interfaces import IStorage
-
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 class QdrantStorage(IStorage):
     def __init__(self, config):
@@ -14,12 +14,29 @@ class QdrantStorage(IStorage):
         self.vector_size = config.vector_size
         self._init_collection()
 
+    def _wait_for_qdrant(self):
+        for i in range(10):
+            try:
+                self.client.get_collections()
+                print("Qdrant is up and running.")
+                return
+            except Exception as e:
+                print(f"Waiting for Qdrant... ({i+1}/10)")
+                time.sleep(1)
+        raise RuntimeError("Qdrant did not become available in time.")
+
     def _init_collection(self):
-        if self.collection_name not in [col.name for col in self.client.get_collections().collections]:
-            self.client.recreate_collection(
+        collections = self.client.get_collections().collections
+        existing_names = [col.name for col in collections]
+        print(f"Existing collections: {existing_names}")
+        if self.collection_name not in existing_names:
+            print(f"Creating collection '{self.collection_name}'")
+            self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=VectorParams(size=self.vector_size, distance=Distance.COSINE),
             )
+        else:
+            print(f"Collection '{self.collection_name}' already exists.")
 
     def get_data(self, query_embedding: Tensor | ndarray | List[Tensor], top_k: int) -> List[Any]:
         if isinstance(query_embedding, list):
@@ -35,26 +52,21 @@ class QdrantStorage(IStorage):
         )
         return [point.payload for point in result]
 
-    def save_data(self, embeddings: Tensor | ndarray | List[Tensor],
-                  chunks: List[str], metadata: dict):
-        if isinstance(embeddings, Tensor):
-            embeddings = embeddings.detach().cpu().numpy()
-
+    def save_data(self, embeddings: Tensor | ndarray | List[Tensor], chunks: List[str], metadata: dict):
         points = []
-        for idx, (embedding, chunk) in enumerate(zip(embeddings, chunks)):
-            payload = metadata.copy()
-            payload['text'] = chunk
-            payload['chunk_index'] = idx
-
-            points.append(PointStruct(
-                id=metadata.get('page_id', 0) * 10000 + idx,
+        for i, (embedding, chunk, meta) in enumerate(zip(embeddings, chunks, metadata)):
+            payload = meta.copy()  # метаданные — это dict
+            payload['text'] = chunk  # добавляем текст к метаданным
+            point = PointStruct(
+                id=i,
                 vector=embedding,
-                payload=payload
-            ))
+                payload=payload,
+            )
+            points.append(point)
 
         self.client.upsert(
             collection_name=self.collection_name,
-            points=points
+            points=points,
         )
 
     def delete_by_page_id(self, page_id: int):

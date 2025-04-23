@@ -43,8 +43,29 @@ class Server:
         @self.router.post("/debug/find-similar")
         async def find_similar():
             query = "Что делает кошка?"
-            results = self.retriever.find_similar_context(query)
-            return {"results": results}
+            context_list = self.retriever.find_similar_context(query)
+
+            if not context_list:
+                return {"result": None, "message": "Нет релевантных контекстов"}
+
+            best = self.retriever.best_match([query], context_list, top_k=1)
+            return {"result": best}
+
+        @self.router.post("/debug/create-collection")
+        async def create_collection():
+            from qdrant_client.http.models import Distance, VectorParams
+
+            if self.storage.client.collection_exists(self.storage.collection_name):
+                return {"message": f"Коллекция '{self.storage.collection_name}' уже существует"}
+
+            self.storage.client.create_collection(
+                collection_name=self.storage.collection_name,
+                vectors_config=VectorParams(
+                    size=self.storage.vector_size,
+                    distance=Distance.COSINE
+                )
+            )
+            return {"message": f"Коллекция '{self.storage.collection_name}' успешно создана"}
 
 
 

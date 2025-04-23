@@ -29,6 +29,7 @@ services:
       - QDRANT_PORT=6333
     volumes:
       - .:/app
+      - ~/.cache/huggingface:/root/.cache/huggingface
     networks:
       - app-network
     command: python main.py
