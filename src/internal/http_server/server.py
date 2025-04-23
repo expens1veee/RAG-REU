@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
 from src.internal.storage.qdrant import QdrantStorage
-import numpy as np
+from src.internal.retriever.retriever import Retriever
 
 
 class AskRequest(BaseModel):
@@ -11,8 +11,9 @@ class AskRequest(BaseModel):
 
 
 class Server:
-    def __init__(self, storage: QdrantStorage):
+    def __init__(self, storage: QdrantStorage, retriever: Retriever = None):
         self.storage = storage
+        self.retriever = retriever
         # Создаём роутер с префиксом /api
         self.router = APIRouter(
             prefix="/api",
@@ -34,18 +35,16 @@ class Server:
 
         @self.router.post("/debug/save-test")
         async def save_test():
-            test_chunks = [
-                "Что такое FastAPI и почему его выбирают?",
-                "Как работает Retrieval-Augmented Generation?",
-                "Основы архитектуры Qdrant и его интеграция с Python",
-            ]
+            chunks = ["Кошка сидит на дереве", "Собака лает на прохожего", "Погода сегодня хорошая"]
+            metadata = [{"source": "тест"}] * len(chunks)
+            self.retriever.generate_embeddings(chunks, metadata)
+            return {"message": "Сохранено"}
 
-            fake_embeddings = np.random.rand(len(test_chunks), self.storage.vector_size).astype(np.float32)
-            metadata = {"page_id": 123, "source": "debug_test"}
+        @self.router.post("/debug/find-similar")
+        async def find_similar():
+            query = "Что делает кошка?"
+            results = self.retriever.find_similar_context(query)
+            return {"results": results}
 
-            self.storage.save_data(
-                embeddings=fake_embeddings,
-                chunks=test_chunks,
-                metadata=metadata
-            )
-            return {"message": f"Сохранено {len(test_chunks)} чанков в Qdrant"}
+
+
