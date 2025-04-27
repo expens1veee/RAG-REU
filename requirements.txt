@@ -13,3 +13,4 @@ qdrant-client==1.13.3
 numpy==1.26.4
 torch==2.3.0
 sentence-transformers==3.0.1
+openai==1.76.0

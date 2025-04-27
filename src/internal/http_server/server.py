@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from src.internal.storage.qdrant import QdrantStorage
 from src.internal.retriever.retriever import Retriever
+from src.internal.generator.generator import Generator
 
 
 class AskRequest(BaseModel):
@@ -11,9 +12,10 @@ class AskRequest(BaseModel):
 
 
 class Server:
-    def __init__(self, storage: QdrantStorage, retriever: Retriever = None):
+    def __init__(self, storage: QdrantStorage, retriever: Retriever = None, generator: Generator = None):
         self.storage = storage
         self.retriever = retriever
+        self.generator = generator
         # Создаём роутер с префиксом /api
         self.router = APIRouter(
             prefix="/api",
@@ -31,7 +33,8 @@ class Server:
         # Эндпоинт для обработки запросов от пользователя
         @self.router.post("/ask")
         async def ask(request: AskRequest):
-            return {"received_query": request.query, "received_token": request.token}
+            query = request.query
+            return self.generator.generate_answer(query)
 
         @self.router.post("/debug/save-test")
         async def save_test():

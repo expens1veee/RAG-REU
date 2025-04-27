@@ -7,6 +7,7 @@ import time
 from src.interfaces.interfaces import IStorage
 from qdrant_client.http.exceptions import UnexpectedResponse
 
+
 class QdrantStorage(IStorage):
     def __init__(self, config):
         self.client = QdrantClient(url=config.qdrant_url)

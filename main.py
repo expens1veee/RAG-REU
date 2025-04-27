@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import os
 import logging
 from src.storage_config.config import StorageConfig
+from src.internal.generator.generator import Generator
 
 
 logging.basicConfig(level=logging.INFO)
@@ -27,8 +28,12 @@ def main() -> None:
     # Создаём приложение FastAPI
     app = FastAPI()
 
+    # Создание генератора с переданным retriever
+
+    generator = Generator(retriever=retriever)
+
     # Создаём экземпляр класса Server и подключаем его роутер
-    server = Server(storage=storage, retriever=retriever)
+    server = Server(storage=storage, retriever=retriever, generator=generator)
     app.include_router(server.router)
 
     # Запускаем сервер
