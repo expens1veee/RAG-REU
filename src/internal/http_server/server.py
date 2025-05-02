@@ -4,6 +4,7 @@ from typing import Optional
 from src.internal.storage.qdrant import QdrantStorage
 from src.internal.retriever.retriever import Retriever
 from src.internal.generator.generator import Generator
+from src.internal.file_processor.processor import PDFChunker
 
 
 class AskRequest(BaseModel):
@@ -69,6 +70,20 @@ class Server:
                 )
             )
             return {"message": f"Коллекция '{self.storage.collection_name}' успешно создана"}
+
+        @self.router.get("/load-documents")
+        async def load_documents():
+            """
+            Эндпоинт для загрузки и обработки документов в Qdrant.
+            """
+            pdf_path = "/app/src/internal/file_processor/приложение о курсовых.pdf"
+            chunker = PDFChunker(chunk_size=800, chunk_overlap=150)
+
+            chunks = chunker.process_pdf(pdf_path)
+            print(f"Created {len(chunks)} chunks from {pdf_path}")
+            metadata = [{"source": "тест"}] * len(chunks)
+            self.retriever.generate_embeddings(chunks, metadata)
+
 
 
 

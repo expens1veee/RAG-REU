@@ -14,3 +14,5 @@ numpy==1.26.4
 torch==2.3.0
 sentence-transformers==3.0.1
 openai==1.76.0
+PyMuPDF==1.25.5
+chonkie==1.0.5
