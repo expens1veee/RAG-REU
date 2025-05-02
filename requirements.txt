@@ -9,4 +9,10 @@ starlette==0.46.2
 typing-inspection==0.4.0
 typing_extensions==4.13.2
 uvicorn==0.32.1
-httpx==0.28.1
+qdrant-client==1.13.3
+numpy==1.26.4
+torch==2.3.0
+sentence-transformers==3.0.1
+openai==1.76.0
+PyMuPDF==1.25.5
+chonkie==1.0.5

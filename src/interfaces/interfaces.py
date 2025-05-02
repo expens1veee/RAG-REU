@@ -66,9 +66,12 @@ class IRetriever(ABC):
 class IGenerator(ABC):
     """Абстрактный класс Генератора"""
     @abstractmethod
-    def generate_answer(self, query: str) -> str:
+    def generate_answer(self, query: str, temperature: float = 0.2, max_tokens: int = 600) -> str:
         """
-        Генерирует ответ в LLM
-        :param query:
-        :return:
+        Генерирует ответ на запрос с учётом контекста, полученного от ретривера.
+
+        :param query: Запрос, для которого нужно сгенерировать ответ
+        :param temperature: Температура для генерации (по умолчанию 0.2)
+        :param max_tokens: Максимальное количество токенов для генерации (по умолчанию 600)
+        :return: Сгенерированный ответ
         """
