@@ -6,6 +6,7 @@ from torch import Tensor
 import time
 from src.interfaces.interfaces import IStorage
 from qdrant_client.http.exceptions import UnexpectedResponse
+import uuid
 
 
 class QdrantStorage(IStorage):
@@ -55,11 +56,11 @@ class QdrantStorage(IStorage):
 
     def save_data(self, embeddings: Tensor | ndarray | List[Tensor], chunks: List[str], metadata: dict):
         points = []
-        for i, (embedding, chunk, meta) in enumerate(zip(embeddings, chunks, metadata)):
+        for embedding, chunk, meta in zip(embeddings, chunks, metadata):
             payload = meta.copy()  # метаданные — это dict
             payload['text'] = chunk  # добавляем текст к метаданным
             point = PointStruct(
-                id=i,
+                id=str(uuid.uuid4()),  # уникальный id
                 vector=embedding,
                 payload=payload,
             )

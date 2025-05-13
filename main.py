@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from src.internal.http_server.server import Server
 from src.internal.storage.qdrant import QdrantStorage
 from src.internal.retriever.retriever import Retriever
@@ -28,13 +30,23 @@ def main() -> None:
     # Создаём приложение FastAPI
     app = FastAPI()
 
-    # Создание генератора с переданным retriever
+    # Монтируем статические файлы
+    app.mount("/static", StaticFiles(directory="src/internal/http_server/static"), name="static")
 
+    # Создание генератора с переданным retriever
     generator = Generator(retriever=retriever)
 
     # Создаём экземпляр класса Server и подключаем его роутер
     server = Server(storage=storage, retriever=retriever, generator=generator)
     app.include_router(server.router)
+
+    @app.get("/")
+    async def read_root():
+        return FileResponse("src/internal/http_server/static/index.html")
+
+    @app.get("/health")
+    async def health_check():
+        return {"status": "healthy"}
 
     # Запускаем сервер
     uvicorn.run(app, host="0.0.0.0", port=8000)
