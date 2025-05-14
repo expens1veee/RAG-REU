@@ -1,14 +1,12 @@
 from src.interfaces.interfaces import IGenerator
 from src.internal.retriever.retriever import Retriever
-from src.interfaces.interfaces import IRetriever
 from openai import OpenAI
-from typing import List, Optional
-
+import os
 
 class Generator(IGenerator):
     def __init__(self, retriever: Retriever):
         self.retriever = retriever
-        self.client = OpenAI(base_url="", api_key="")
+        self.client = OpenAI(base_url=os.getenv("url"), api_key=os.getenv("api"))
 
     def generate_answer(self, query: str, temperature: float = 0.2, max_tokens: int = 600) -> str:
         """

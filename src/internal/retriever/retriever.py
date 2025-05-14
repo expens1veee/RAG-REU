@@ -1,31 +1,23 @@
-from sentence_transformers import SentenceTransformer, util
+import os
+
+from sentence_transformers import util
 
 from typing import List, Tuple
 from src.interfaces.interfaces import IRetriever, IStorage
 import numpy as np
-import requests
 from yandex_cloud_ml_sdk import YCloudML
 
-
 sdk = YCloudML(
-        folder_id="",
-        auth="",
+        folder_id=os.getenv("folder_id"),
+        auth=os.getenv("api"),
     )
 
 
 class Retriever(IRetriever):
-    def __init__(self, storage: IStorage, model_name: str = "sergeyzh/rubert-mini-frida"):
-        self.model = SentenceTransformer(model_name)
+    def __init__(self, storage: IStorage):
         self.storage = storage
 
     def generate_embeddings(self, chunks: List[str], metadata: List[dict]):
-        # if not chunks:
-        #     return Tensor()
-        # embeddings = self.model.encode(
-        #     chunks,
-        #     convert_to_tensor=True,
-        #     normalize_embeddings=True
-        # )
         doc_model = sdk.models.text_embeddings("doc")
         doc_embeddings = [doc_model.run(text) for text in chunks]
         self.storage.save_data(doc_embeddings, chunks, metadata)

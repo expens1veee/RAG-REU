@@ -27,6 +27,9 @@ services:
     environment:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
+    env_file:
+      - .env
+
     volumes:
       - .:/app
       - ~/.cache/huggingface:/root/.cache/huggingface

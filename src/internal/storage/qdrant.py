@@ -1,11 +1,8 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance, Filter, FieldCondition, MatchValue, ScoredPoint
 from typing import Any, List
-from numpy import ndarray
-
 import time
 from src.interfaces.interfaces import IStorage
-from qdrant_client.http.exceptions import UnexpectedResponse
 import uuid
 
 

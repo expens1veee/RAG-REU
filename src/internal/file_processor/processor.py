@@ -5,13 +5,10 @@ PDF Reader для RAG с использованием PyMuPDF и LateChunker.
 
 import os
 import fitz  # PyMuPDF
-import re
 from typing import List, Dict, Any, Optional, Tuple
 import json
 from dataclasses import dataclass, asdict
 from tqdm import tqdm
-import numpy as np
-from src.internal.retriever.retriever import Retriever
 
 
 @dataclass
