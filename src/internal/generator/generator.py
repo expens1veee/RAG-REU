@@ -8,7 +8,7 @@ from typing import List, Optional
 class Generator(IGenerator):
     def __init__(self, retriever: Retriever):
         self.retriever = retriever
-        self.client = OpenAI(base_url="http://host.docker.internal:8080", api_key="not-needed")
+        self.client = OpenAI(base_url="", api_key="")
 
     def generate_answer(self, query: str, temperature: float = 0.2, max_tokens: int = 600) -> str:
         """
@@ -26,16 +26,16 @@ class Generator(IGenerator):
             return "Нет релевантных контекстов."
 
         # 2. Получаем лучший контекст, используя лучший матч
-        best_context = self.retriever.best_match([query], context_list, top_k=1)
+        best_context = self.retriever.find_similar_context(query)
 
         # 3. Отправляем запрос в OpenAI, чтобы получить сгенерированный ответ
         response = self.client.chat.completions.create(
-            model="local-model",
+            model="gpt://b1gc5shtig6flos837c8/yandexgpt-lite",
             messages=[
                 {"role": "system", "content": "Вы технический специалист службы поддержки корпоративных систем. Ваша задача - предоставить точный и понятный ответ на основе предоставленной документации." +
                                               "Требования к ответу: 1. Используйте ТОЛЬКО информацию из предоставленного контекста" +
                                             "2. Если вопрос требует пошаговых инструкций, структурируйте ответ в виде нумерованного списка" +
-                                              "Если информации недостаточно или её нет в контексте, сообщите об этом: В предоставленной документации информация по данному вопросу отсутствует" +
+                                              "3. Если информации недостаточно или её нет в контексте, сообщите об этом: В предоставленной документации информация по данному вопросу отсутствует" +
                                               "4. Ответ должен быть конкретным и относиться только к заданному вопросу" +
                                               "5. Избегайте предположений и догадок"},
                 {"role": "user", "content": f"Запрос пользователя: {query}\n\nКонтекст:\n{best_context}"}

@@ -1,7 +1,16 @@
 from sentence_transformers import SentenceTransformer, util
-from torch import Tensor
+
 from typing import List, Tuple
 from src.interfaces.interfaces import IRetriever, IStorage
+import numpy as np
+import requests
+from yandex_cloud_ml_sdk import YCloudML
+
+
+sdk = YCloudML(
+        folder_id="",
+        auth="",
+    )
 
 
 class Retriever(IRetriever):
@@ -9,20 +18,23 @@ class Retriever(IRetriever):
         self.model = SentenceTransformer(model_name)
         self.storage = storage
 
-    def generate_embeddings(self, chunks: List[str], metadata: List[dict]) -> Tensor:
-        if not chunks:
-            return Tensor()
-        embeddings = self.model.encode(
-            chunks,
-            convert_to_tensor=True,
-            normalize_embeddings=True
-        )
-        self.storage.save_data(embeddings, chunks, metadata)
-        return embeddings
+    def generate_embeddings(self, chunks: List[str], metadata: List[dict]):
+        # if not chunks:
+        #     return Tensor()
+        # embeddings = self.model.encode(
+        #     chunks,
+        #     convert_to_tensor=True,
+        #     normalize_embeddings=True
+        # )
+        doc_model = sdk.models.text_embeddings("doc")
+        doc_embeddings = [doc_model.run(text) for text in chunks]
+        self.storage.save_data(doc_embeddings, chunks, metadata)
+        return doc_embeddings
 
     def find_similar_context(self, query: str) -> List[Tuple[str, str]]:
-        query_embedding = self.model.encode(query, convert_to_tensor=True, normalize_embeddings=True)
-        results = self.storage.get_data(query_embedding, top_k=5)
+        query_model = sdk.models.text_embeddings("query")
+        query_embedding = np.array(query_model.run(query))
+        results = self.storage.get_data(query_embedding, top_k=3)
 
         # results — список чанков (или словарей) из стораджа
         context_pairs = []
@@ -31,18 +43,28 @@ class Retriever(IRetriever):
             source = r.get("metadata", {}).get("source", "unknown")
             context_pairs.append((text, source))
 
+        print(context_pairs)
         return context_pairs
 
-    def best_match(self, query_list: List[str], context_list: List[Tuple[str, str]], top_k: int) -> str:
+    def best_match(self, query, context_list: List[Tuple[str, str]], top_k: int) -> str:
         """
         Простейшая реализация: берём контексты, ранжируем по косинусной близости и возвращаем топ-1.
         """
         if not context_list:
             return ""
         context_texts = [ctx[0] for ctx in context_list]
-        context_embeddings = self.model.encode(context_texts, convert_to_tensor=True, normalize_embeddings=True)
-        query_embeddings = self.model.encode(query_list, convert_to_tensor=True, normalize_embeddings=True)
 
-        scores = util.cos_sim(query_embeddings, context_embeddings)
+        doc_model = sdk.models.text_embeddings("doc")
+        context_embeddings = [doc_model.run(str(text)) for text in context_list]
+        query_model = sdk.models.text_embeddings("query")
+        query_embedding = np.array(query_model.run(query))
+
+        context_embeddings = np.array(context_embeddings)
+
+        scores = util.cos_sim(query_embedding, context_embeddings)
         best_score_idx = scores.argmax().item()
+        print(context_texts[best_score_idx])
         return context_texts[best_score_idx]
+
+
+

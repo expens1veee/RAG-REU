@@ -2,7 +2,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance, Filter, FieldCondition, MatchValue, ScoredPoint
 from typing import Any, List
 from numpy import ndarray
-from torch import Tensor
+
 import time
 from src.interfaces.interfaces import IStorage
 from qdrant_client.http.exceptions import UnexpectedResponse
@@ -40,12 +40,10 @@ class QdrantStorage(IStorage):
         else:
             print(f"Collection '{self.collection_name}' already exists.")
 
-    def get_data(self, query_embedding: Tensor | ndarray | List[Tensor], top_k: int) -> List[Any]:
+    def get_data(self, query_embedding: str, top_k: int) -> List[Any]:
         if isinstance(query_embedding, list):
             query_embedding = query_embedding[0]
 
-        if isinstance(query_embedding, Tensor):
-            query_embedding = query_embedding.detach().cpu().numpy()
 
         result: List[ScoredPoint] = self.client.search(
             collection_name=self.collection_name,
@@ -54,7 +52,7 @@ class QdrantStorage(IStorage):
         )
         return [point.payload for point in result]
 
-    def save_data(self, embeddings: Tensor | ndarray | List[Tensor], chunks: List[str], metadata: dict):
+    def save_data(self, embeddings:  list, chunks: List[str], metadata: dict | None):
         points = []
         for embedding, chunk, meta in zip(embeddings, chunks, metadata):
             payload = meta.copy()  # метаданные — это dict
