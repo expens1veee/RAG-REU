@@ -10,3 +10,4 @@ venv/
 docs/
 README.md
 Makefile
+.env
