@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG-REU Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: calc(100vh - 200px);
+            scroll-behavior: smooth;
+        }
+        .message {
+            max-width: 85%;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 20px;
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .user-message {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        .bot-message {
+            background: #F3F4F6;
+            color: #1F2937;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        .typing-indicator {
+            display: none;
+            padding: 15px;
+            margin: 10px;
+            background: #F3F4F6;
+            border-radius: 20px;
+            width: fit-content;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #6B7280;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1s infinite;
+        }
+        @keyframes typing {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-container {
+            background: white;
+            border-top: 1px solid #E5E7EB;
+            padding: 20px;
+            position: relative;
+        }
+        .send-button {
+            transition: all 0.3s ease;
+        }
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+        .send-button:active {
+            transform: scale(0.95);
+        }
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex flex-col">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-robot text-indigo-600 mr-2"></i>
+                        RAG-REU Assistant
+                    </h1>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">
+                            <i class="fas fa-circle text-green-500 mr-1"></i>
+                            Online
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="chat-container overflow-y-auto p-4" id="chatContainer">
+                        <div class="message bot-message">
+                            Здравствуйте! Я ваш AI-ассистент. Как я могу вам помочь?
+                            <div class="message-time">Сейчас</div>
+                        </div>
+                    </div>
+
+                    <div class="typing-indicator" id="typingIndicator">
+                        <span></span>
+                        <span style="animation-delay: 0.2s"></span>
+                        <span style="animation-delay: 0.4s"></span>
+                    </div>
+
+                    <div class="input-container">
+                        <form id="chatForm" class="flex gap-2">
+                            <input type="text" 
+                                   id="userInput" 
+                                   class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Введите ваше сообщение..."
+                                   required>
+                            <button type="submit" 
+                                    class="send-button bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                Отправить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chatForm = document.getElementById('chatForm');
+        const userInput = document.getElementById('userInput');
+        const chatContainer = document.getElementById('chatContainer');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const messageContent = document.createElement('div');
+            messageContent.textContent = message;
+            messageDiv.appendChild(messageContent);
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = getCurrentTime();
+            messageDiv.appendChild(timeDiv);
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage(message) {
+            try {
+                console.log('Отправка запроса на /api/ask с сообщением:', message);
+                const response = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: message }),
+                });
+
+                console.log('Получен ответ:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Получены данные:', data);
+                return data.response || data;
+            } catch (error) {
+                console.error('Ошибка при отправке сообщения:', error);
+                return 'Извините, произошла ошибка при обработке вашего запроса.';
+            }
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            userInput.value = '';
+            typingIndicator.style.display = 'block';
+
+            const response = await sendMessage(message);
+            typingIndicator.style.display = 'none';
+            addMessage(response);
+        });
+
+        // Фокус на поле ввода при загрузке страницы
+        userInput.focus();
+
+        // Обработка Enter для отправки сообщения
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html> 

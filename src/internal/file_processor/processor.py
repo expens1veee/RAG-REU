@@ -5,13 +5,10 @@ PDF Reader для RAG с использованием PyMuPDF и LateChunker.
 
 import os
 import fitz  # PyMuPDF
-import re
 from typing import List, Dict, Any, Optional, Tuple
 import json
 from dataclasses import dataclass, asdict
 from tqdm import tqdm
-import numpy as np
-from src.internal.retriever.retriever import Retriever
 
 
 @dataclass
@@ -284,7 +281,7 @@ def process_pdf_directory(directory_path: str, output_directory: str, chunk_size
         try:
             # Обрабатываем PDF и сохраняем чанки
             chunks = chunker.process_pdf(pdf_path)
-            chunker.save_chunks_to_json(chunks, output_file)
+            chunker.save_chunks_to_qdrant(chunks, output_file)
             print(f"Processed {pdf_file}: Created {len(chunks)} chunks")
         except Exception as e:
             print(f"Error processing {pdf_file}: {str(e)}")

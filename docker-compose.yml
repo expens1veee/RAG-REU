@@ -27,13 +27,23 @@ services:
     environment:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
+    env_file:
+      - .env
+
     volumes:
       - .:/app
       - ~/.cache/huggingface:/root/.cache/huggingface
       - ./documents:/app/documents
+      - ./src/internal/http_server/static:/app/src/internal/http_server/static
     networks:
       - app-network
     command: python main.py
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   qdrant_data:
