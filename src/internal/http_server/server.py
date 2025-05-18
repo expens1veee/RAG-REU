@@ -37,23 +37,6 @@ class Server:
             query = request.query
             return self.generator.generate_answer(query)
 
-        @self.router.post("/debug/save-test")
-        async def save_test():
-            chunks = ["Кошка сидит на дереве", "Собака лает на прохожего", "Погода сегодня хорошая"]
-            metadata = [{"source": "тест"}] * len(chunks)
-            self.retriever.generate_embeddings(chunks, metadata)
-            return {"message": "Сохранено"}
-
-        @self.router.post("/debug/find-similar")
-        async def find_similar():
-            query = "Что делает кошка?"
-            context_list = self.retriever.find_similar_context(query)
-
-            if not context_list:
-                return {"result": None, "message": "Нет релевантных контекстов"}
-
-            best = self.retriever.best_match([query], context_list, top_k=1)
-            return {"result": best}
 
         @self.router.post("/debug/create-collection")
         async def create_collection():
@@ -76,13 +59,14 @@ class Server:
             """
             Эндпоинт для загрузки и обработки документов в Qdrant.
             """
-            pdf_path = "/app/src/internal/file_processor/приложение о курсовых.pdf"
-            chunker = PDFChunker(chunk_size=800, chunk_overlap=150)
+            pdf_paths = ["/app/src/internal/file_processor/приложение о курсовых.pdf", "/app/src/internal/file_processor/проход.pdf", "/app/src/internal/file_processor/экзамены.pdf"]
+            for pdf_path in pdf_paths:
+                chunker = PDFChunker(chunk_size=800, chunk_overlap=150)
 
-            chunks = chunker.process_pdf(pdf_path)
-            print(f"Created {len(chunks)} chunks from {pdf_path}")
-            metadata = [{"source": "тест"}] * len(chunks)
-            self.retriever.generate_embeddings(chunks, metadata)
+                chunks = chunker.process_pdf(pdf_path)
+                print(f"Created {len(chunks)} chunks from {pdf_path}")
+                metadata = [{"source": "тест"}] * len(chunks)
+                self.retriever.generate_embeddings(chunks, metadata)
 
 
 
