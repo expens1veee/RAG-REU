@@ -35,7 +35,6 @@ class Retriever(IRetriever):
             source = r.get("metadata", {}).get("source", "unknown")
             context_pairs.append((text, source))
 
-        print(context_pairs)
         return context_pairs
 
     def best_match(self, query, context_list: List[Tuple[str, str]], top_k: int) -> str:
@@ -55,7 +54,6 @@ class Retriever(IRetriever):
 
         scores = util.cos_sim(query_embedding, context_embeddings)
         best_score_idx = scores.argmax().item()
-        print(context_texts[best_score_idx])
         return context_texts[best_score_idx]
 
 
