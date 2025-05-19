@@ -28,7 +28,7 @@ class Generator(IGenerator):
 
         # 3. Отправляем запрос в OpenAI, чтобы получить сгенерированный ответ
         response = self.client.chat.completions.create(
-            model="gpt://b1gc5shtig6flos837c8/yandexgpt-lite",
+            model="gpt://b1gc5shtig6flos837c8/yandexgpt",
             messages=[
                 {"role": "system", "content": "Вы технический специалист службы поддержки корпоративных систем. Ваша задача - предоставить точный и понятный ответ на основе предоставленной документации." +
                                               "Требования к ответу: 1. Используйте ТОЛЬКО информацию из предоставленного контекста" +

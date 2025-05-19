@@ -26,7 +26,7 @@ class Retriever(IRetriever):
     def find_similar_context(self, query: str) -> List[Tuple[str, str]]:
         query_model = sdk.models.text_embeddings("query")
         query_embedding = np.array(query_model.run(query))
-        results = self.storage.get_data(query_embedding, top_k=3)
+        results = self.storage.get_data(query_embedding, top_k=5)
 
         # results — список чанков (или словарей) из стораджа
         context_pairs = []

@@ -77,6 +77,84 @@
             opacity: 0.7;
             margin-top: 5px;
         }
+        .feedback-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .feedback-button {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background-color: #F3F4F6;
+            border: 1px solid #E5E7EB;
+        }
+        .feedback-button:hover {
+            transform: scale(1.05);
+            background-color: #E5E7EB;
+        }
+        .feedback-button.active {
+            background-color: #E5E7EB;
+            border-color: #D1D5DB;
+        }
+        .feedback-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .feedback-button:disabled:hover {
+            transform: none;
+            background-color: #F3F4F6;
+        }
+        .like-button {
+            color: #059669;
+        }
+        .like-button.active {
+            background-color: #D1FAE5;
+            border-color: #059669;
+        }
+        .dislike-button {
+            color: #DC2626;
+        }
+        .dislike-button.active {
+            background-color: #FEE2E2;
+            border-color: #DC2626;
+        }
+        .feedback-button i {
+            font-size: 1rem;
+        }
+        .feedback-tooltip {
+            position: absolute;
+            background: #1F2937;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        .feedback-button:hover .feedback-tooltip {
+            opacity: 1;
+        }
+        .feedback-sent {
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-top: 4px;
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -144,6 +222,71 @@
             return now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         }
 
+        function createFeedbackButtons(messageId) {
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'feedback-buttons';
+            
+            const likeButton = document.createElement('button');
+            likeButton.className = 'feedback-button like-button';
+            likeButton.innerHTML = `
+                <i class="fas fa-thumbs-up"></i>
+                <span>Полезно</span>
+                <div class="feedback-tooltip">Ответ был полезен</div>
+            `;
+            
+            const dislikeButton = document.createElement('button');
+            dislikeButton.className = 'feedback-button dislike-button';
+            dislikeButton.innerHTML = `
+                <i class="fas fa-thumbs-down"></i>
+                <span>Не полезно</span>
+                <div class="feedback-tooltip">Ответ не был полезен</div>
+            `;
+
+            const feedbackSent = document.createElement('div');
+            feedbackSent.className = 'feedback-sent';
+            feedbackSent.textContent = 'Спасибо за обратную связь!';
+
+            function handleFeedback(type) {
+                // Отправляем фидбек на сервер
+                fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message_id: messageId,
+                        feedback_type: type
+                    })
+                }).catch(console.error);
+
+                // Обновляем UI
+                likeButton.classList.toggle('active', type === 'like');
+                dislikeButton.classList.toggle('active', type === 'dislike');
+                feedbackSent.style.display = 'block';
+                
+                // Отключаем кнопки после отправки фидбека
+                likeButton.disabled = true;
+                dislikeButton.disabled = true;
+
+                // Скрываем кнопки через 2 секунды после отправки фидбека
+                setTimeout(() => {
+                    feedbackDiv.style.opacity = '0';
+                    setTimeout(() => {
+                        feedbackDiv.style.display = 'none';
+                    }, 300); // Время должно совпадать с transition в CSS
+                }, 2000);
+            }
+
+            likeButton.addEventListener('click', () => handleFeedback('like'));
+            dislikeButton.addEventListener('click', () => handleFeedback('dislike'));
+
+            feedbackDiv.appendChild(likeButton);
+            feedbackDiv.appendChild(dislikeButton);
+            feedbackDiv.appendChild(feedbackSent);
+
+            return feedbackDiv;
+        }
+
         function addMessage(message, isUser = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
@@ -156,6 +299,14 @@
             timeDiv.className = 'message-time';
             timeDiv.textContent = getCurrentTime();
             messageDiv.appendChild(timeDiv);
+
+            // Добавляем кнопки обратной связи только для сообщений бота
+            if (!isUser) {
+                const messageId = Date.now().toString(); // Генерируем уникальный ID для сообщения
+                messageDiv.dataset.messageId = messageId;
+                const feedbackButtons = createFeedbackButtons(messageId);
+                messageDiv.appendChild(feedbackButtons);
+            }
 
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;

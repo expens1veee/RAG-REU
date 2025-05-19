@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Literal
 from src.internal.storage.qdrant import QdrantStorage
 from src.internal.retriever.retriever import Retriever
 from src.internal.generator.generator import Generator
@@ -10,6 +10,11 @@ from src.internal.file_processor.processor import PDFChunker
 class AskRequest(BaseModel):
     query: str
     token: Optional[str] = None  # Опциональное поле для токена
+
+
+class FeedbackRequest(BaseModel):
+    message_id: str
+    feedback_type: Literal['like', 'dislike']
 
 
 class Server:
@@ -37,6 +42,24 @@ class Server:
             query = request.query
             return self.generator.generate_answer(query)
 
+        @self.router.post("/feedback")
+        async def feedback(request: FeedbackRequest):
+            """
+            Эндпоинт для обработки обратной связи пользователя
+            """
+            try:
+                # Здесь можно добавить логику сохранения фидбека
+                # Например, в базу данных или файл
+                print(f"Получен фидбек: {request.feedback_type} для сообщения {request.message_id}")
+                
+                # Если используете генератор, можно передать фидбек ему
+                if self.generator:
+                    self.generator.process_feedback(request.message_id, request.feedback_type)
+                
+                return {"status": "success", "message": "Спасибо за обратную связь!"}
+            except Exception as e:
+                print(f"Ошибка при обработке фидбека: {e}")
+                return {"status": "error", "message": "Не удалось обработать обратную связь"}
 
         @self.router.post("/debug/create-collection")
         async def create_collection():
